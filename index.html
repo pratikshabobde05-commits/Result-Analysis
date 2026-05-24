@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Result Analyzer</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { poppins: ['Poppins'], inter: ['Inter'] },
+          colors: {
+            navy: '#0A0A1A',
+            neon: '#00D4FF',
+            purp: '#8B5CF6',
+            surface: '#12122A',
+            card: 'rgba(255,255,255,0.04)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+    .glow-blue { box-shadow: 0 0 20px rgba(0,212,255,0.15); }
+    .glow-purple { box-shadow: 0 0 20px rgba(139,92,246,0.15); }
+    .gradient-text { background: linear-gradient(135deg, #00D4FF, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .bar-animate { animation: barGrow 1s ease-out forwards; transform-origin: bottom; }
+    @keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    @keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp 0.6s ease-out forwards; opacity: 0; }
+    .fade-up:nth-child(1) { animation-delay: 0.1s; }
+    .fade-up:nth-child(2) { animation-delay: 0.2s; }
+    .fade-up:nth-child(3) { animation-delay: 0.3s; }
+    .fade-up:nth-child(4) { animation-delay: 0.4s; }
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .cgpa-ring { animation: spin-slow 2s ease-out forwards; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); }
+    .btn-gradient { background: linear-gradient(135deg, #00D4FF, #8B5CF6); transition: all 0.3s; }
+    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,212,255,0.3); }
+    .leaderboard-row:hover { background: rgba(255,255,255,0.04); transform: translateX(4px); }
+    .leaderboard-row { transition: all 0.2s; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0A0A1A; }
+    ::-webkit-scrollbar-thumb { background: #8B5CF6; border-radius: 3px; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-navy text-white font-inter overflow-auto">
+  <div id="app" class="h-full w-full"><!-- Login Page -->
+   <div id="login-page" class="h-full w-full flex items-center justify-center p-4" style="background: radial-gradient(ellipse at top left, rgba(0,212,255,0.12), transparent 50%), radial-gradient(ellipse at bottom right, rgba(139,92,246,0.12), transparent 50%), #0A0A1A;">
+    <div class="glass rounded-3xl p-8 md:p-12 w-full max-w-md glow-blue fade-up">
+     <div class="text-center mb-8">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl btn-gradient flex items-center justify-center"><i data-lucide="graduation-cap" class="w-8 h-8 text-white"></i>
+      </div>
+      <h1 id="login-title" class="font-poppins text-3xl font-bold gradient-text mb-2">Student Result Analyzer</h1>
+      <p class="text-gray-400 text-sm">Sign in to view your academic dashboard</p>
+     </div>
+     <form id="login-form" class="space-y-4">
+      <div><label for="email" class="text-xs text-gray-400 mb-1 block">Student Email</label> <input id="email" type="email" placeholder="@jdcoem.ac.in" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-neon transition">
+      </div>
+      <div><label for="pass" class="text-xs text-gray-400 mb-1 block">Password</label> <input id="pass" type="password" placeholder="••••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-neon transition">
+      </div><button type="submit" class="w-full btn-gradient text-white font-semibold py-3 rounded-xl mt-2">Sign In</button>
+     </form>
+     <p class="text-center text-gray-500 text-xs mt-6">Demo: any credentials work</p>
+    </div>
+   </div><!-- Dashboard -->
+   <div id="dashboard" class="hidden h-full w-full flex flex-col md:flex-row"><!-- Sidebar -->
+    <nav class="w-full md:w-64 glass border-r border-white/5 p-4 md:p-6 flex md:flex-col gap-2 overflow-x-auto md:overflow-visible shrink-0">
+     <div class="hidden md:flex items-center gap-3 mb-8">
+      <div class="w-9 h-9 rounded-xl btn-gradient flex items-center justify-center">
+       <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+      </div><span class="font-poppins font-bold text-sm gradient-text"> JDCOEM Result Analyzer</span>
+     </div><button onclick="showSection('overview')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white transition whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Overview</span></button> <button onclick="showSection('subjects')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white transition whitespace-nowrap"><i data-lucide="book-open" class="w-4 h-4"></i><span>Subjects</span></button> <button onclick="showSection('performance')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white transition whitespace-nowrap"><i data-lucide="trending-up" class="w-4 h-4"></i><span>Performance</span></button> <button onclick="showSection('leaderboard')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white transition whitespace-nowrap"><i data-lucide="trophy" class="w-4 h-4"></i><span>Leaderboard</span></button> <button onclick="showSection('insights')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white transition whitespace-nowrap"><i data-lucide="sparkles" class="w-4 h-4"></i><span>AI Insights</span></button> <button onclick="showSection('export')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white transition whitespace-nowrap"><i data-lucide="download" class="w-4 h-4"></i><span>Export</span></button>
+    </nav><!-- Main Content -->
+    <main class="flex-1 overflow-auto p-4 md:p-8"><!-- Overview -->
+     <section id="sec-overview">
+      <div class="mb-8">
+       <h2 id="welcome-text" class="font-poppins text-2xl md:text-3xl font-bold mb-1">Welcome back, <span class="gradient-text" id="student-name-display">Pratiksha</span> 👋</h2>
+       <p class="text-gray-400 text-sm">Semester 4 • B.Tech Information Technology</p>
+      </div><!-- Stats Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+       <div class="glass rounded-2xl p-4 glow-blue fade-up">
+        <div class="flex items-center gap-2 mb-2">
+         <div class="w-8 h-8 rounded-lg bg-neon/10 flex items-center justify-center">
+          <i data-lucide="users" class="w-4 h-4 text-neon"></i>
+         </div>
+        </div>
+        <p class="text-2xl font-poppins font-bold">105</p>
+        <p class="text-xs text-gray-400">Total Students</p>
+       </div>
+       <div class="glass rounded-2xl p-4 glow-purple fade-up">
+        <div class="flex items-center gap-2 mb-2">
+         <div class="w-8 h-8 rounded-lg bg-purp/10 flex items-center justify-center">
+          <i data-lucide="bar-chart-2" class="w-4 h-4 text-purp"></i>
+         </div>
+        </div>
+        <p class="text-2xl font-poppins font-bold">8.68</p>
+        <p class="text-xs text-gray-400">Avg CGPA</p>
+       </div>
+       <div class="glass rounded-2xl p-4 fade-up">
+        <div class="flex items-center gap-2 mb-2">
+         <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+          <i data-lucide="award" class="w-4 h-4 text-green-400"></i>
+         </div>
+        </div>
+        <p class="text-2xl font-poppins font-bold">9.74</p>
+        <p class="text-xs text-gray-400">Top CGPA</p>
+       </div>
+       <div class="glass rounded-2xl p-4 fade-up">
+        <div class="flex items-center gap-2 mb-2">
+         <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+         </div>
+        </div>
+        <p class="text-2xl font-poppins font-bold">91.2%</p>
+        <p class="text-xs text-gray-400">Pass Rate</p>
+       </div>
+      </div><!-- CGPA Meter -->
+      <div class="glass rounded-2xl p-6 md:p-8 glow-blue">
+       <h3 class="font-poppins font-semibold text-lg mb-6">Your CGPA Progress</h3>
+       <div class="flex flex-col md:flex-row items-center gap-8">
+        <div class="relative w-48 h-48">
+         <svg viewbox="0 0 100 100" class="w-full h-full -rotate-90"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8" /> <circle cx="50" cy="50" r="42" fill="none" stroke="url(#cgpaGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="40" class="cgpa-ring" /> <defs>
+           <lineargradient id="cgpaGrad">
+            <stop offset="0%" stop-color="#00D4FF" />
+            <stop offset="100%" stop-color="#8B5CF6" />
+           </lineargradient>
+          </defs>
+         </svg>
+         <div class="absolute inset-0 flex flex-col items-center justify-center"><span class="font-poppins text-4xl font-bold gradient-text">8.52</span> <span class="text-xs text-gray-400">/ 10.0</span>
+         </div>
+        </div>
+        <div class="flex-1 space-y-3">
+         <div class="flex justify-between text-sm">
+          <span class="text-gray-400">Semester 1</span><span>8.05</span>
+         </div>
+         <div class="w-full bg-white/5 rounded-full h-2">
+          <div class="h-2 rounded-full bg-gradient-to-r from-neon to-purp" style="width:78%"></div>
+         </div>
+         <div class="flex justify-between text-sm">
+          <span class="text-gray-400">Semester 2</span><span>8.58</span>
+         </div>
+         <div class="w-full bg-white/5 rounded-full h-2">
+          <div class="h-2 rounded-full bg-gradient-to-r from-neon to-purp" style="width:82%"></div>
+         </div>
+         <div class="flex justify-between text-sm">
+          <span class="text-gray-400">Semester 3</span><span>8.68</span>
+         </div>
+         <div class="w-full bg-white/5 rounded-full h-2">
+          <div class="h-2 rounded-full bg-gradient-to-r from-neon to-purp" style="width:85.2%"></div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </section><!-- Subjects -->
+     <section id="sec-subjects" class="hidden">
+      <h2 class="font-poppins text-2xl font-bold mb-6">Subject-wise Analysis</h2>
+      <div class="glass rounded-2xl p-6 mb-6">
+       <h3 class="font-semibold text-sm text-gray-400 mb-4">Marks Distribution (Semester 4)</h3>
+       <div class="flex items-end gap-3 h-48" id="bar-chart">
+        <div class="flex-1 flex flex-col items-center gap-1"><span class="text-xs text-gray-400">82</span>
+         <div class="w-full rounded-t-lg bg-gradient-to-t from-neon to-neon/60 bar-animate" style="height:82%"></div><span class="text-xs text-gray-400 mt-1">JAVA</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1"><span class="text-xs text-gray-400">80</span>
+         <div class="w-full rounded-t-lg bg-gradient-to-t from-purp to-purp/60 bar-animate" style="height:80%;animation-delay:0.1s"></div><span class="text-xs text-gray-400 mt-1">SPM</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1"><span class="text-xs text-gray-400">79</span>
+         <div class="w-full rounded-t-lg bg-gradient-to-t from-green-400 to-green-400/60 bar-animate" style="height:79%;animation-delay:0.2s"></div><span class="text-xs text-gray-400 mt-1">DAA</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1"><span class="text-xs text-purp-400">82</span>
+         <div class="w-full rounded-t-lg bg-gradient-to-t from-purp-500 to-purp-500/60 bar-animate" style="height:82%;animation-delay:0.3s"></div><span class="text-xs text-purp-400 mt-1">JDCAP</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1"><span class="text-xs text-gray-400">95</span>
+         <div class="w-full rounded-t-lg bg-gradient-to-t from-neon to-neon/60 bar-animate" style="height:75%;animation-delay:0.4s"></div><span class="text-xs text-gray-400 mt-1">Soft Skill</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1"><span class="text-xs text-gray-400">85</span>
+         <div class="w-full rounded-t-lg bg-gradient-to-t from-purp to-purp/60 bar-animate" style="height:85%;animation-delay:0.5s"></div><span class="text-xs text-gray-400 mt-1">FLLM</span>
+        </div>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+       <div class="glass rounded-2xl p-4 flex items-center gap-4 border-l-4 border-neon">
+        <div class="w-10 h-10 rounded-xl bg-neon/10 flex items-center justify-center">
+         <i data-lucide="code" class="w-5 h-5 text-neon"></i>
+        </div>
+        <div>
+         <p class="font-semibold text-sm">JAVA</p>
+         <p class="text-xs text-gray-400">82/100 • A Grade</p>
+        </div>
+       </div>
+       <div class="glass rounded-2xl p-4 flex items-center gap-4 border-l-4 border-purp">
+        <div class="w-10 h-10 rounded-xl bg-purp/10 flex items-center justify-center">
+         <i data-lucide="database" class="w-5 h-5 text-purp"></i>
+        </div>
+        <div>
+         <p class="font-semibold text-sm">SPM</p>
+         <p class="text-xs text-gray-400">80/100 • A Grade</p>
+        </div>
+       </div>
+       <div class="glass rounded-2xl p-4 flex items-center gap-4 border-l-4 border-purp-400">
+        <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+         <i data-lucide="cpu" class="w-5 h-5 text-green-400"></i>
+        </div>
+        <div>
+         <p class="font-semibold text-sm">DAA</p>
+         <p class="text-xs text-gray-400">79/100 • B+ Grade</p>
+        </div>
+       </div>
+       <div class="glass rounded-2xl p-4 flex items-center gap-4 border-l-4 border-purp-500">
+        <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+         <i data-lucide="calculator" class="w-5 h-5 text-green-400"></i>
+        </div>
+        <div>
+         <p class="font-semibold text-sm">JDCAP</p>
+         <<p class="text-xs text-gray-400">82/100 • A Grade</p>
+        </div>
+       </div>
+       <div class="glass rounded-2xl p-4 flex items-center gap-4 border-l-4 border-green-400">
+        <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+         <i data-lucide="cpu" class="w-5 h-5 text-green-400"></i>
+        </div>
+        <div>
+         <p class="font-semibold text-sm">Soft Skill</p>
+         <p class="text-xs text-gray-400">95/100 • A+ Grade</p>
+        </div>
+       </div>
+       <div class="glass rounded-2xl p-4 flex items-center gap-4 border-l-4 border-green">
+        <div class="w-10 h-10 rounded-xl bg-green/10 flex items-center justify-center">
+         <i data-lucide="git-branch" class="w-5 h-5 text-green"></i>
+        </div>
+        <div>
+         <p class="font-semibold text-sm">FLLM</p>
+         <p class="text-xs text-gray-400">85/100 • A Grade</p>
+        </div>
+       </div>
+      </div>
+     </section><!-- Performance -->
+     <section id="sec-performance" class="hidden">
+      <h2 class="font-poppins text-2xl font-bold mb-6">Semester Performance</h2>
+      <div class="glass rounded-2xl p-6 glow-purple">
+       <h3 class="font-semibold text-sm text-gray-400 mb-4">CGPA Trend</h3>
+       <div class="relative h-64">
+        <svg viewbox="0 0 600 200" class="w-full h-full" preserveaspectratio="none"><defs>
+          <lineargradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.3" />
+           <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
+          </lineargradient>
+          <lineargradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+           <stop offset="0%" stop-color="#00D4FF" />
+           <stop offset="100%" stop-color="#8B5CF6" />
+          </lineargradient>
+         </defs> <!-- Grid --> <line x1="0" y1="50" x2="600" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="1" /> <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.05)" stroke-width="1" /> <line x1="0" y1="150" x2="600" y2="150" stroke="rgba(255,255,255,0.05)" stroke-width="1" /> <!-- Area --> <path d="M0,130 L100,110 L200,100 L300,85 L400,75 L500,60 L500,200 L0,200 Z" fill="url(#areaGrad)" /> <!-- Line --> <polyline points="0,130 100,110 200,100 300,85 400,75 500,60" fill="none" stroke="url(#lineGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /> <!-- Points --> <circle cx="0" cy="130" r="5" fill="#00D4FF" /> <circle cx="100" cy="110" r="5" fill="#00D4FF" /> <circle cx="200" cy="100" r="5" fill="#8B5CF6" /> <circle cx="300" cy="85" r="5" fill="#8B5CF6" /> <circle cx="400" cy="75" r="5" fill="#8B5CF6" /> <circle cx="500" cy="60" r="5" fill="#8B5CF6" />
+        </svg>
+        <div class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-2"><span>Sem 1</span><span>Sem 2</span><span>Sem 3</span><span>Sem 4
+        </div>
+       </div>
+      </div><!-- Grade Distribution Donut -->
+      <div class="glass rounded-2xl p-6 mt-6">
+       <h3 class="font-semibold text-sm text-gray-400 mb-4">Grade Distribution</h3>
+       <div class="flex items-center justify-center gap-8 flex-wrap">
+        <svg viewbox="0 0 100 100" class="w-40 h-40"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12" /> <circle cx="50" cy="50" r="40" fill="none" stroke="#00D4FF" stroke-width="12" stroke-dasharray="75 176" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)" /> <circle cx="50" cy="50" r="40" fill="none" stroke="#8B5CF6" stroke-width="12" stroke-dasharray="50 201" stroke-dashoffset="-75" stroke-linecap="round" transform="rotate(-90 50 50)" /> <circle cx="50" cy="50" r="40" fill="none" stroke="#10B981" stroke-width="12" stroke-dasharray="63 188" stroke-dashoffset="-125" stroke-linecap="round" transform="rotate(-90 50 50)" /> <circle cx="50" cy="50" r="40" fill="none" stroke="#EF4444" stroke-width="12" stroke-dasharray="25 226" stroke-dashoffset="-188" stroke-linecap="round" transform="rotate(-90 50 50)" />
+        </svg>
+        <div class="space-y-2 text-sm">
+         <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-neon"></div><span>A Grade (30%)</span>
+         </div>
+         <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-purp"></div><span>B Grade (20%)</span>
+         </div>
+         <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-emerald-500"></div><span>C Grade (25%)</span>
+         </div>
+         <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-red-500"></div><span>Fail (10%)</span>
+         </div>
+        </div>
+       </div>
+      </div>
+     </section><!-- Leaderboard -->
+     <section id="sec-leaderboard" class="hidden">
+      <h2 class="font-poppins text-2xl font-bold mb-6">🏆 Leaderboard</h2>
+      <div class="glass rounded-2xl p-6">
+       <div class="space-y-3" id="leaderboard-list">
+       </div>
+      </div>
+     </section><!-- Insights -->
+     <section id="sec-insights" class="hidden">
+      <h2 class="font-poppins text-2xl font-bold mb-6">✨ AI Insights</h2>
+      <div class="glass rounded-2xl p-6 glow-purple mb-6 border border-purp/20">
+       <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl btn-gradient flex items-center justify-center">
+         <i data-lucide="sparkles" class="w-5 h-5"></i>
+        </div>
+        <div>
+         <p class="font-poppins font-semibold">AI Study Suggestions</p>
+         <p class="text-xs text-gray-400">Based on your performance patterns</p>
+        </div>
+       </div>
+       <div class="space-y-4">
+        <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl p-4">
+         <p class="text-sm font-semibold text-gray-400 mb-1">⚠️ Weak Subject: DAA</p>
+         <p class="text-xs text-gray-400">Score dropped below pass threshold. Focus 2+ hours daily on calculus and linear algebra. Consider joining a study group.</p>
+        </div>
+        <div class="bg-neon/5 border border-neon/20 rounded-xl p-4">
+         <p class="text-sm font-semibold text-neon mb-1">📈 Improving: JAVA </p>
+         <p class="text-xs text-gray-400">Consistent improvement over last 3 assignments. Keep practicing with Wireshark labs and protocol simulations.</p>
+        </div>
+        <div class="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+         <p class="text-sm font-semibold text-green-400 mb-1">🌟 Strength: Soft Skill</p>
+         <p class="text-xs text-gray-400">Top 5% in class. Consider mentoring peers or exploring advanced OS topics like distributed systems.</p>
+        </div>
+        <div class="bg-purp/5 border border-purp/20 rounded-xl p-4">
+         <p class="text-sm font-semibold text-purp mb-1">💡 Study Tip</p>
+         <p class="text-xs text-gray-400">Your performance peaks mid-semester. Try spacing study sessions evenly and use active recall techniques for better retention before finals.</p>
+        </div>
+       </div>
+      </div>
+     </section><!-- Export -->
+     <section id="sec-export" class="hidden">
+      <h2 class="font-poppins text-2xl font-bold mb-6">Export Reports</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+       <div class="glass rounded-2xl p-8 text-center glow-blue">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neon/10 flex items-center justify-center"><i data-lucide="file-text" class="w-8 h-8 text-neon"></i>
+        </div>
+        <h3 class="font-poppins font-semibold text-lg mb-2">PDF Report</h3>
+        <p class="text-xs text-gray-400 mb-6">Complete result card with grades, CGPA, and performance analysis</p><button onclick="simulateDownload(this, 'PDF')" class="btn-gradient px-6 py-3 rounded-xl font-semibold text-sm"> <span class="flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Download PDF</span> </button>
+       </div>
+       <div class="glass rounded-2xl p-8 text-center glow-purple">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-purp/10 flex items-center justify-center"><i data-lucide="table" class="w-8 h-8 text-purp"></i>
+        </div>
+        <h3 class="font-poppins font-semibold text-lg mb-2">Excel Report</h3>
+        <p class="text-xs text-gray-400 mb-6">Raw data export with all subjects, marks, and analytics</p><button onclick="simulateDownload(this, 'Excel')" class="btn-gradient px-6 py-3 rounded-xl font-semibold text-sm"> <span class="flex items-center justify-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Download Excel</span> </button>
+       </div>
+      </div>
+      <p class="text-center text-xs text-gray-500 mt-6">📋 Demo: Downloads simulate a report generation</p>
+     </section>
+    </main>
+   </div>
+  </div>
+  <script>
+    // Data
+    const leaderboardData = [
+      { rank: 1, name: 'Pratiksha Bobade', cgpa: 9.74, badge: '🥇' },
+      { rank: 2, name: 'Purva Injalkar', cgpa: 9.61, badge: '🥈' },
+      { rank: 3, name: 'Rutika Bhoyar', cgpa: 9.48, badge: '🥉' },
+      { rank: 4, name: 'Sanskruti Bhoyar', cgpa: 9.32, badge: '' },
+      { rank: 5, name: 'Tisha Nandeshwar', cgpa: 9.32, badge: '' },
+      { rank: 6, name: 'Kavya Nair', cgpa: 8.45, badge: '' },
+      { rank: 7, name: 'Rohan Singh', cgpa: 8.30, badge: '' },
+      { rank: 8, name: 'Ananya Das', cgpa: 8.21, badge: '' },
+      { rank: 9, name: 'Vikram Rao', cgpa: 8.10, badge: '' },
+      { rank: 10, name: 'Ishita Jain', cgpa: 7.95, badge: '' },
+    ];
+
+    // Render leaderboard
+    const lbList = document.getElementById('leaderboard-list');
+    leaderboardData.forEach(s => {
+      const colors = s.rank === 1 ? 'border-green-400/30 bg-green-400/5' : s.rank === 2 ? 'border-green-300/30 bg-green-300/5' : s.rank === 3 ? 'border-green-400/30 bg-green-400/5' : 'border-white/5';
+      lbList.innerHTML += `<div class="leaderboard-row flex items-center gap-4 p-3 rounded-xl border ${colors} cursor-default">
+        <span class="w-8 text-center font-poppins font-bold text-lg ${s.rank<=3?'gradient-text':'text-gray-500'}">${s.badge || s.rank}</span>
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-neon/30 to-purp/30 flex items-center justify-center text-xs font-bold">${s.name.split(' ').map(n=>n[0]).join('')}</div>
+        <div class="flex-1"><p class="font-semibold text-sm">${s.name}</p></div>
+        <span class="font-poppins font-bold text-sm ${s.rank<=3?'gradient-text':'text-gray-400'}">${s.cgpa.toFixed(2)}</span>
+      </div>`;
+    });
+
+    // Navigation
+    function showSection(id) {
+      document.querySelectorAll('[id^="sec-"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById('sec-' + id).classList.remove('hidden');
+    }
+
+    // Login
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      lucide.createIcons();
+    });
+
+    // Download simulation
+    function simulateDownload(btn, type) {
+      const original = btn.innerHTML;
+      btn.innerHTML = `<span class="flex items-center justify-center gap-2"><svg class="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31 31"/></svg> Generating...</span>`;
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.innerHTML = `<span class="flex items-center justify-center gap-2">✓ ${type} Ready!</span>`;
+        setTimeout(() => { btn.innerHTML = original; btn.disabled = false; lucide.createIcons(); }, 2000);
+      }, 1500);
+    }
+
+    // Element SDK
+    const defaultConfig = {
+      app_title: 'Student Result Analyzer',
+      welcome_message: 'Welcome back',
+      student_name: 'Arjun Mehta',
+      background_color: '#0A0A1A',
+      accent_color: '#00D4FF',
+      purple_color: '#8B5CF6',
+      text_color: '#FFFFFF',
+      surface_color: '#12122A',
+      font_family: 'Poppins',
+      font_size: 16
+    };
+
+    function applyConfig(config) {
+      const title = config.app_title || defaultConfig.app_title;
+      const welcome = config.welcome_message || defaultConfig.welcome_message;
+      const name = config.student_name || defaultConfig.student_name;
+      const font = config.font_family || defaultConfig.font_family;
+      const size = config.font_size || defaultConfig.font_size;
+
+      document.getElementById('login-title').textContent = title;
+      document.getElementById('student-name-display').textContent = name.split(' ')[0];
+
+      document.body.style.fontFamily = `${font}, Inter, sans-serif`;
+      document.body.style.fontSize = size + 'px';
+    }
+
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => { applyConfig(config); },
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+          { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+          { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+          { get: () => config.accent_color || defaultConfig.accent_color, set: (v) => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } },
+          { get: () => config.purple_color || defaultConfig.purple_color, set: (v) => { config.purple_color = v; window.elementSdk.setConfig({ purple_color: v }); } },
+        ],
+        borderables: [],
+        fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+        fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ['app_title', config.app_title || defaultConfig.app_title],
+        ['welcome_message', config.welcome_message || defaultConfig.welcome_message],
+        ['student_name', config.student_name || defaultConfig.student_name]
+      ])
+    });
+
+    lucide.createIcons();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a005a7293d13465e',t:'MTc3OTU1NjAwNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
